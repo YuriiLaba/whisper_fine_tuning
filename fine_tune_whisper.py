@@ -115,7 +115,7 @@ class Trainer:
             predicted_text = self.predict(batch["mel_spectrogram"].to(self.model_params["device"]))
 
             for target_text_sample, predicted_text_sample in zip(target_text, predicted_text):
-                val_wer.append(wer(predicted_text_sample.lower(), target_text_sample.lower()))
+                val_wer.append(wer(target_text_sample.lower(), predicted_text_sample.lower()))
 
             # calculate wer only on the first batch
             break

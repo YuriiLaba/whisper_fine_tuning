@@ -3,8 +3,8 @@ import numpy as np
 
 def levenshtein(str_a, str_b, debug=False) -> tuple:
     """
-    :param str_a: the hypothesis string
     :param str_b: the reference string
+    :param str_a: the hypothesis string
     :param debug: print edit distance matrix step by step
     :return: levenshtein distance between strings
 
@@ -36,21 +36,21 @@ def levenshtein(str_a, str_b, debug=False) -> tuple:
 
 def wer(str_a, str_b) -> float:
     """
-    :param str_a: the hypothesis string
     :param str_b: the reference string
+    :param str_a: the hypothesis string
     :return: word error rate
     """
     distance_matrix, num_errors = levenshtein(str_a.split(), str_b.split())
-    num_words = len(str_b.split())
+    num_words = len(str_a.split())
     return num_errors / num_words
 
 
 def cer(str_a, str_b) -> float:
     """
-    :param str_a: the hypothesis string
     :param str_b: the reference string
+    :param str_a: the hypothesis string
     :return: word error rate
     """
     distance_matrix, num_errors = levenshtein(str_a, str_b)
-    num_characters = len(str_b)
+    num_characters = len(str_a)
     return num_errors / num_characters
