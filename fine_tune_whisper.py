@@ -4,6 +4,7 @@ from torchaudio.datasets import LIBRISPEECH
 import torch.optim as optim
 import torch.nn as nn
 import tqdm
+from pathlib import Path
 
 import whisper.whisper
 from whisper.whisper import load_model, pad_or_trim, log_mel_spectrogram
@@ -71,7 +72,7 @@ class Trainer:
         self.model = model
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset
-        self.output_dir = output_dir
+        self.output_dir = Path(output_dir)
         self.model_params = model_params
 
         self.train_dataloader = DataLoader(dataset=self.train_dataset, batch_size=model_params["batch_size"], collate_fn=collate_fn)
