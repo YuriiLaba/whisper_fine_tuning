@@ -34,23 +34,23 @@ def levenshtein(str_a, str_b, debug=False) -> tuple:
     return edit_dist_matrix, edit_dist_matrix[-1, -1]
 
 
-def wer(str_a , str_b) -> float:
+def wer(str_a, str_b) -> float:
     """
     :param str_a: the reference string
     :param str_b: the hypothesis string
     :return: word error rate
     """
     distance_matrix, num_errors = levenshtein(str_a.split(), str_b.split())
-    num_words = len(str_b.split())
+    num_words = len(str_a.split())
     return num_errors / num_words
 
 
-def cer(str_a , str_b) -> float:
+def cer(str_a, str_b) -> float:
     """
     :param str_a: the reference string
     :param str_b: the hypothesis string
     :return: word error rate
     """
     distance_matrix, num_errors = levenshtein(str_a, str_b)
-    num_characters = len(str_b)
+    num_characters = len(str_a)
     return num_errors / num_characters
