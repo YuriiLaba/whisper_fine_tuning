@@ -105,7 +105,7 @@ class Trainer:
 
             if idx % 100 == 0:
                 print(f'epoch {epoch}, iter {idx:05}: x-entropy={loss.item():.3f}')
-            if idx % 500 == 0:
+            if idx % 500 == 0 and idx != 0:
                 torch.save(self.model.state_dict(), self._get_ckpt_path(epoch, idx))
 
     def validate(self, epoch):
