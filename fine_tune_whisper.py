@@ -82,6 +82,9 @@ class Trainer:
         self.optimizer = optim.Adam(self.model.parameters(), lr=model_params["learning_rate"])
         self.criterion = nn.CrossEntropyLoss(ignore_index=-100)
 
+    def _get_ckpt_path(self, epoch, iter):
+        return self.output_dir.joinpath(f'ckpt_epoch_{epoch}_iter{iter}.pt')
+
     def predict(self, mel_spectrogram):
         with torch.no_grad():
             res = self.model.decode(mel_spectrogram, self.options)
@@ -101,6 +104,8 @@ class Trainer:
 
             if idx % 100 == 0:
                 print(f'epoch {epoch}, iter {idx:05}: x-entropy={loss.item():.3f}')
+            if idx % 500 == 0:
+                torch.save(self.model.state_dict(), self._get_ckpt_path(epoch, idx))
 
     def validate(self, epoch):
         val_wer = []
