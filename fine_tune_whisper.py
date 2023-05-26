@@ -84,7 +84,7 @@ class Trainer:
         self.criterion = nn.CrossEntropyLoss(ignore_index=-100)
 
     def _get_ckpt_path(self, epoch, iter):
-        return self.output_dir.joinpath(f'ckpt_epoch_{epoch}_iter{iter}.pt')
+        return self.output_dir.joinpath(f'ckpt_epoch_{epoch}_iter_{iter}.pt')
 
     def predict(self, mel_spectrogram):
         with torch.no_grad():
