@@ -6,11 +6,16 @@ import torch.nn as nn
 import tqdm
 from pathlib import Path
 
-import whisper.whisper
-from whisper.whisper import load_model, pad_or_trim, log_mel_spectrogram
-from whisper.whisper.tokenizer import get_tokenizer
+from whisper import load_model, pad_or_trim, log_mel_spectrogram
+from whisper import DecodingOptions
 
 from asr_metrics import wer
+
+import gc
+
+def report_gpu():
+    torch.cuda.empty_cache()
+    gc.collect()
 
 
 def collate_fn(items):
@@ -78,7 +83,7 @@ class Trainer:
         self.train_dataloader = DataLoader(dataset=self.train_dataset, batch_size=model_params["batch_size"], collate_fn=collate_fn)
         self.eval_dataloader = DataLoader(dataset=self.eval_dataset, batch_size=model_params["batch_size"], collate_fn=collate_fn)
 
-        self.options = whisper.whisper.DecodingOptions(language="en", without_timestamps=True, fp16=False)
+        self.options = DecodingOptions(language="uk", without_timestamps=True, fp16=False)
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=model_params["learning_rate"])
         self.criterion = nn.CrossEntropyLoss(ignore_index=-100)
@@ -107,7 +112,7 @@ class Trainer:
                 print(f'epoch {epoch}, iter {idx:05}: x-entropy={loss.item():.3f}')
             if idx % 500 == 0 and idx != 0:
                 torch.save(self.model.state_dict(), self._get_ckpt_path(epoch, idx))
-
+            del batch
     def validate(self, epoch):
         val_wer = []
         for idx, batch in enumerate(tqdm.tqdm(self.eval_dataloader)):
@@ -118,35 +123,15 @@ class Trainer:
                 val_wer.append(wer(target_text_sample.lower(), predicted_text_sample.lower()))
 
             # calculate wer only on the first batch
-            break
+                break
+            del batch
 
         mean_wer = sum(val_wer)/len(val_wer)
         print(f'epoch {epoch}. Validation WER: {mean_wer:.3f}')
 
     def train(self):
         for e in range(self.model_params["n_epochs"]):
-            self.validate(e-1)
+            self.validate(e - 1)
+            report_gpu()
             self.train_epoch(e)
-
-
-if __name__ == "__main__":
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    params = torch.load("/content/drive/MyDrive/Colab Notebooks/language-recognition-school/making-sense-of-speech/patriotic_whisper_mixed_en_uk.pt")
-    model = load_model("tiny", device=device)
-    model.load_state_dict(params)
-
-    tokenizer = get_tokenizer(model.is_multilingual, language="en", task="transcribe")
-
-    train_dataset = MyDataset(root=".", url='train-clean-100', download=True, tokenizer=tokenizer)
-    eval_dataset = MyDataset(root=".", url='dev-clean', download=True, tokenizer=tokenizer)
-
-    model_params = {
-        "n_epochs": 2,
-        "batch_size": 16,
-        "learning_rate": 1e-5,
-        "device": device
-    }
-
-    trainer = Trainer(model, train_dataset, eval_dataset, ".", model_params)
-    trainer.train()
-
+            report_gpu()
