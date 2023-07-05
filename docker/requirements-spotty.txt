@@ -1,0 +1,9 @@
+torchaudio
+jsonlines
+pathlib
+pydub
+pandas
+neptune-client
+tqdm
+openai-whisper
+torch==2.0.1
