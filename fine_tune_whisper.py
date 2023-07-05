@@ -1,12 +1,10 @@
 import torch
 from torch.utils.data import DataLoader
-from torchaudio.datasets import LIBRISPEECH
 import torch.optim as optim
 import torch.nn as nn
-import tqdm
+from tqdm import tqdm
 from pathlib import Path
 
-from whisper import load_model, pad_or_trim, log_mel_spectrogram
 from whisper import DecodingOptions
 
 from asr_metrics import wer
@@ -48,32 +46,8 @@ def collate_fn(items):
     }
 
 
-class MyDataset(LIBRISPEECH):
-    def __init__(self, *args, **kwargs):
-        self.tokenizer = kwargs.pop("tokenizer")
-
-        super().__init__(*args, **kwargs)
-
-    def __getitem__(self, idx):
-        item = super().__getitem__(idx)
-
-        padded_audio = pad_or_trim(item[0])
-        mel_spectrogram = log_mel_spectrogram(padded_audio)
-        text = item[2].lower()
-
-        tokenized_text = [*self.tokenizer.sot_sequence_including_notimestamps] + self.tokenizer.encode(text)
-        label = tokenized_text[1:] + [self.tokenizer.eot]
-
-        return {
-            "mel_spectrogram":mel_spectrogram,
-            "dec_input":tokenized_text,
-            "label":label,
-            "text": text
-        }
-
-
 class Trainer:
-    def __init__(self, model, train_dataset, eval_dataset, output_dir, model_params):
+    def __init__(self, model, train_dataset, eval_dataset, output_dir, model_params, run):
         self.model = model
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset
@@ -88,6 +62,8 @@ class Trainer:
         self.optimizer = optim.Adam(self.model.parameters(), lr=model_params["learning_rate"])
         self.criterion = nn.CrossEntropyLoss(ignore_index=-100)
 
+        self.neptune_logger = run
+
     def _get_ckpt_path(self, epoch, iter):
         return self.output_dir.joinpath(f'ckpt_epoch_{epoch}_iter_{iter}.pt')
 
@@ -101,37 +77,74 @@ class Trainer:
         loss = self.criterion(model_output.view(-1, model_output.shape[-1]), target=batch["label"].view(-1).to(self.model_params["device"]))
         return loss
 
-    def train_epoch(self, epoch):
-        for idx, batch in enumerate(tqdm.tqdm(self.train_dataloader)):
+    def train_epoch(self, epoch, loss_metrics):
+        self.model.train()
+        train_bar = tqdm(self.train_dataloader)
+        for idx, batch in enumerate(train_bar):
             self.optimizer.zero_grad()
             loss = self.train_step(batch)
             loss.backward()
             self.optimizer.step()
 
-            if idx % 100 == 0:
-                print(f'epoch {epoch}, iter {idx:05}: x-entropy={loss.item():.3f}')
+            loss_metrics.update(loss.detach().cpu().numpy(), self.model_params["batch_size"])
+            train_bar.set_postfix(loss=loss_metrics.avg, epoch=epoch, step=idx)
+
+            self.neptune_logger["train/loss"].append(loss_metrics.avg)
+
+            # if idx % 100 == 0:
+            #     print(f'epoch {epoch}, iter {idx:05}: x-entropy={loss.item():.3f}')
             if idx % 500 == 0 and idx != 0:
                 torch.save(self.model.state_dict(), self._get_ckpt_path(epoch, idx))
             del batch
     def validate(self, epoch):
+        self.model.eval()
         val_wer = []
-        for idx, batch in enumerate(tqdm.tqdm(self.eval_dataloader)):
+        for idx, batch in enumerate(tqdm(self.eval_dataloader)):
             target_text = batch["text"]
             predicted_text = self.predict(batch["mel_spectrogram"].to(self.model_params["device"]))
 
             for target_text_sample, predicted_text_sample in zip(target_text, predicted_text):
                 val_wer.append(wer(target_text_sample.lower(), predicted_text_sample.lower()))
 
-            # calculate wer only on the first batch
-                break
+            # # calculate wer only on the first batch
+            #     break
             del batch
 
         mean_wer = sum(val_wer)/len(val_wer)
         print(f'epoch {epoch}. Validation WER: {mean_wer:.3f}')
+        self.neptune_logger["val/WER"].append(mean_wer)
 
     def train(self):
+        loss_metrics = AverageMeter()
+
         for e in range(self.model_params["n_epochs"]):
             self.validate(e - 1)
             report_gpu()
-            self.train_epoch(e)
+            self.train_epoch(e, loss_metrics)
             report_gpu()
+
+class AverageMeter(object):
+    """Computes and stores the average and current value"""
+
+    def __init__(self, window_size=None):
+        self.length = 0
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+        self.window_size = window_size
+
+    def reset(self):
+        self.length = 0
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        if self.window_size and (self.count >= self.window_size):
+            self.reset()
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
