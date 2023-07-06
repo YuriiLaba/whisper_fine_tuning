@@ -110,8 +110,11 @@ class Trainer:
             for target_text_sample, predicted_text_sample in zip(target_text, predicted_text):
                 val_wer.append(wer(target_text_sample.lower(),
                                    predicted_text_sample.lower()))
-                val_wer_clean.append(wer(clean_text_before_wer(target_text_sample),
-                                         clean_text_before_wer(predicted_text_sample)))
+                try:
+                    val_wer_clean.append(wer(clean_text_before_wer(target_text_sample),
+                                             clean_text_before_wer(predicted_text_sample)))
+                except ValueError:
+                    val_wer_clean.append(1)
 
 
         # # calculate wer only on the first batch
