@@ -6,4 +6,5 @@ pandas
 neptune-client
 tqdm
 openai-whisper
+jiwer
 torch==2.0.1

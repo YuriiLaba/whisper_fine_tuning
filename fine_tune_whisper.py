@@ -7,7 +7,8 @@ from pathlib import Path
 
 from whisper import DecodingOptions
 
-from asr_metrics import wer
+from jiwer import wer
+from wer_utils import clean_text_before_wer
 
 import gc
 
@@ -98,21 +99,31 @@ class Trainer:
             del batch
     def validate(self, epoch):
         self.model.eval()
+
         val_wer = []
+        val_wer_clean = []
+
         for idx, batch in enumerate(tqdm(self.eval_dataloader)):
             target_text = batch["text"]
             predicted_text = self.predict(batch["mel_spectrogram"].to(self.model_params["device"]))
 
             for target_text_sample, predicted_text_sample in zip(target_text, predicted_text):
-                val_wer.append(wer(target_text_sample.lower(), predicted_text_sample.lower()))
+                val_wer.append(wer(target_text_sample.lower(),
+                                   predicted_text_sample.lower()))
+                val_wer_clean.append(wer(clean_text_before_wer(target_text_sample),
+                                         clean_text_before_wer(predicted_text_sample)))
 
-            # # calculate wer only on the first batch
-            #     break
+
+        # # calculate wer only on the first batch
+        #     break
             del batch
 
         mean_wer = sum(val_wer)/len(val_wer)
-        print(f'epoch {epoch}. Validation WER: {mean_wer:.3f}')
+        mean_wer_clean = sum(val_wer_clean) / len(val_wer)
+
+        print(f'epoch {epoch}. Validation WER: {mean_wer:.3f} Clean WER: {mean_wer_clean:.3f}')
         self.neptune_logger["val/WER"].append(mean_wer)
+        self.neptune_logger["val/WER_clean"].append(val_wer_clean)
 
     def train(self):
         loss_metrics = AverageMeter()
