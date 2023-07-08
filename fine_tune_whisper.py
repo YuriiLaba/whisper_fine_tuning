@@ -65,6 +65,14 @@ class Trainer:
 
         self.neptune_logger = run
 
+        self.early_stop = model_params['early_stopping']
+
+        self.calc_val_num = model_params['calc_val_num']
+        self.best_mean_wer = 1000
+        self.mean_wer = None
+        self.mean_wer_clean = None
+        self.bad_rounds = 0
+
     def _get_ckpt_path(self, epoch, iter):
         return self.output_dir.joinpath(f'ckpt_epoch_{epoch}_iter_{iter}.pt')
 
@@ -92,12 +100,24 @@ class Trainer:
 
             self.neptune_logger["train/loss"].append(loss_metrics.avg)
 
-            # if idx % 100 == 0:
-            #     print(f'epoch {epoch}, iter {idx:05}: x-entropy={loss.item():.3f}')
-            if idx % 500 == 0 and idx != 0:
-                torch.save(self.model.state_dict(), self._get_ckpt_path(epoch, idx))
+            if idx % self.calc_val_num == 0:
+                self.validate(epoch - 1, subsample=True)
+                self.model.train()
+
+                if self.mean_wer < self.best_mean_wer:
+                    self.best_mean_wer = self.mean_wer
+                    self.bad_rounds = 0
+                    torch.save(self.model.state_dict(), self._get_ckpt_path(epoch, idx))
+                else:
+                    self.bad_rounds += 1
+
+                if self.bad_rounds == self.early_stop:
+                    print(f'Early stopping detected, Best WER was {self.best_mean_wer:.3f} at {epoch-self.bad_rounds}. Current WER = {self.mean_wer:.3f}')
+                    return None
+
             del batch
-    def validate(self, epoch):
+
+    def validate(self, epoch, subsample = False):
         self.model.eval()
 
         val_wer = []
@@ -116,26 +136,44 @@ class Trainer:
                 except ValueError:
                     val_wer_clean.append(1)
 
-
-        # # calculate wer only on the first batch
-        #     break
+            if idx == 50 and subsample:
+                break
             del batch
 
-        mean_wer = sum(val_wer)/len(val_wer)
-        mean_wer_clean = sum(val_wer_clean) / len(val_wer)
+        self.mean_wer = sum(val_wer)/len(val_wer)
+        self.mean_wer_clean = sum(val_wer_clean) / len(val_wer)
 
-        print(f'epoch {epoch}. Validation WER: {mean_wer:.3f} Clean WER: {mean_wer_clean:.3f}')
-        self.neptune_logger["val/WER"].append(mean_wer)
-        self.neptune_logger["val/WER_clean"].append(val_wer_clean)
+        if subsample:
+            print(f'epoch {epoch}. Subsample validation WER: {self.mean_wer:.3f} vlean WER: {self.mean_wer_clean:.3f}')
+            self.neptune_logger["val/WER_subsample"].append(self.mean_wer)
+            self.neptune_logger["val/WER_clean_subsample"].append(self.mean_wer_clean)
+        else:
+            print(f'epoch {epoch}. Validation WER: {self.mean_wer:.3f} Clean WER: {self.mean_wer_clean:.3f}')
+            self.neptune_logger["val/WER"].append(self.mean_wer)
+            self.neptune_logger["val/WER_clean"].append(self.mean_wer_clean)
 
     def train(self):
         loss_metrics = AverageMeter()
 
         for e in range(self.model_params["n_epochs"]):
-            self.validate(e - 1)
-            report_gpu()
             self.train_epoch(e, loss_metrics)
             report_gpu()
+
+            self.validate(e - 1)
+            report_gpu()
+
+            # if self.mean_wer < self.best_mean_wer:
+            #     self.best_mean_wer = self.mean_wer
+            #     self.bad_rounds = 0
+            # else:
+            #     self.bad_rounds += 1
+            #
+            # if self.bad_rounds == self.early_stop:
+            #     print(f'Early stopping detected, Best model at {e-self.bad_rounds}')
+            #     return None
+
+        torch.save(self.model.state_dict(), self._get_ckpt_path('final', ''))
+
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""

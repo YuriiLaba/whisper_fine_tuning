@@ -31,6 +31,8 @@ model_params = {
     "n_epochs": 4,
     "batch_size": 4,
     "learning_rate": 1e-5,
+    "early_stopping": 50,
+    "calc_val_num": 200,
     "device": device
 }
 
