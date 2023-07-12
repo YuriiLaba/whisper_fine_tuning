@@ -33,6 +33,7 @@ def collate_fn(items):
     batch_label = torch.full([n_batch, max_label_len], fill_value=-100, dtype=torch.long)
     batch_dec_input = torch.full([n_batch, max_label_len], fill_value=50257, dtype=torch.long)
 
+    # opportunity to optimize this part of code
     for idx, item in enumerate(items):
         n_frame = item["mel_spectrogram"].shape[-1]
         batch_mel[idx, :, :n_frame] = item["mel_spectrogram"]
@@ -55,8 +56,10 @@ class Trainer:
         self.output_dir = Path(output_dir)
         self.model_params = model_params
 
-        self.train_dataloader = DataLoader(dataset=self.train_dataset, batch_size=model_params["batch_size"], collate_fn=collate_fn)
-        self.eval_dataloader = DataLoader(dataset=self.eval_dataset, batch_size=model_params["batch_size"], collate_fn=collate_fn)
+        self.train_dataloader = DataLoader(dataset=self.train_dataset, batch_size=model_params["batch_size"],
+                                           collate_fn=collate_fn, num_workers=2, pin_memory=True)
+        self.eval_dataloader = DataLoader(dataset=self.eval_dataset, batch_size=model_params["batch_size"],
+                                          collate_fn=collate_fn, num_workers=2, pin_memory=True)
 
         self.options = DecodingOptions(language="uk", without_timestamps=True, fp16=False)
 
@@ -88,7 +91,7 @@ class Trainer:
 
     def train_epoch(self, epoch, loss_metrics):
         self.model.train()
-        train_bar = tqdm(self.train_dataloader)
+        train_bar = tqdm(self.train_dataloader, desc='Train')
         for idx, batch in enumerate(train_bar):
             self.optimizer.zero_grad()
             loss = self.train_step(batch)
@@ -123,7 +126,8 @@ class Trainer:
         val_wer = []
         val_wer_clean = []
 
-        for idx, batch in enumerate(tqdm(self.eval_dataloader)):
+        eval_bar = tqdm(self.eval_dataloader, desc='Eval', leave=False)
+        for idx, batch in enumerate(eval_bar):
             target_text = batch["text"]
             predicted_text = self.predict(batch["mel_spectrogram"].to(self.model_params["device"]))
 
