@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import pandas as pd
 
@@ -15,7 +16,7 @@ def clean_dataset(path_to_dataset, path_to_all_predictions='', wer_threshold=1):
     len_of_data = len(list(labels.keys()))
     all_preds_df = pd.read_csv(os.path.join(path_to_all_predictions, "all_predictions.csv"))
 
-    for bad_chunk in all_preds_df[all_preds_df.wer >= wer_threshold]['audio'].values:
+    for bad_chunk in all_preds_df[(all_preds_df.wer >= wer_threshold)|(all_preds_df.clean_label==' ')]['audio'].values:
         path_to_bad_chunk = os.path.join(path_to_dataset, '_'.join(bad_chunk.split('_')[:2]), bad_chunk + '.wav')
 
         try:
@@ -25,8 +26,10 @@ def clean_dataset(path_to_dataset, path_to_all_predictions='', wer_threshold=1):
         except KeyError:
             continue
 
+    for key, value in labels.items():
+        labels[key] = re.sub(r'\([^)]*\)', '', value)
+
     with open(os.path.join(path_to_dataset, "labels.jsonl"), 'w') as file:
         json.dump(labels, file)
     print(f'Before cleaning {len_of_data} samples')
     print(f'After cleaning {len(list(labels.keys()))} samples')
-

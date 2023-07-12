@@ -35,7 +35,7 @@ train_labels_file = os.path.join(path_to_dataset, "dataset/labels.jsonl")
 eval_root_dir = os.path.join(path_to_dataset, "eval_dataset/")
 eval_labels_file = os.path.join(path_to_dataset, "eval_dataset/labels_eval.jsonl")
 
-clean_dataset(path_to_dataset)
+clean_dataset(path_to_dataset, wer_threshold=0.8)
 
 train_dataset = AudioDataset(train_root_dir, train_labels_file, tokenizer=tokenizer)
 eval_dataset = AudioDataset(eval_root_dir, eval_labels_file, tokenizer=tokenizer)
