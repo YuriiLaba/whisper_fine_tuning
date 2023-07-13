@@ -19,9 +19,18 @@ path_to_dataset = ""
 run = neptune.init_run(project="vova.mudruy/Toronto-whisper",
                        api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiJlYTg0NWQxYy0zNTVkLTQwZDktODJhZC00ZjgxNGNhODE2OTIifQ==")
 
+model_params = {
+    "n_epochs": 4,
+    "batch_size": 4,
+    "learning_rate": 1e-5,
+    "early_stopping": 50,
+    "calc_val_num": 200,
+    "model_size": "small",
+}
+
 remove_absolute_path()
 
-model = whisper.load_model("small")
+model = whisper.load_model(model_params['model_size'])
 
 if use_multiple_gpu:
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -42,16 +51,9 @@ clean_dataset(os.path.join(path_to_dataset, 'dataset'), wer_threshold=0.8)
 train_dataset = AudioDataset(train_root_dir, train_labels_file, tokenizer=tokenizer)
 eval_dataset = AudioDataset(eval_root_dir, eval_labels_file, tokenizer=tokenizer)
 
-model_params = {
-    "n_epochs": 4,
-    "batch_size": 4,
-    "learning_rate": 1e-5,
-    "early_stopping": 50,
-    "calc_val_num": 200,
-    "device": device
-}
-
 run["parameters"] = model_params
+
+model_params['device'] = device
 
 trainer = Trainer(model, train_dataset, eval_dataset, ".", model_params, run)
 trainer.train()

@@ -57,9 +57,9 @@ class Trainer:
         self.model_params = model_params
 
         self.train_dataloader = DataLoader(dataset=self.train_dataset, batch_size=model_params["batch_size"],
-                                           collate_fn=collate_fn, num_workers=2, pin_memory=True)
+                                           collate_fn=collate_fn)
         self.eval_dataloader = DataLoader(dataset=self.eval_dataset, batch_size=model_params["batch_size"],
-                                          collate_fn=collate_fn, num_workers=2, pin_memory=True)
+                                          collate_fn=collate_fn)
 
         self.options = DecodingOptions(language="uk", without_timestamps=True, fp16=False)
 
@@ -148,7 +148,7 @@ class Trainer:
         self.mean_wer_clean = sum(val_wer_clean) / len(val_wer)
 
         if subsample:
-            print(f'epoch {epoch}. Subsample validation WER: {self.mean_wer:.3f} vlean WER: {self.mean_wer_clean:.3f}')
+            print(f'epoch {epoch}. Subsample validation WER: {self.mean_wer:.3f} Clean WER: {self.mean_wer_clean:.3f}')
             self.neptune_logger["val/WER_subsample"].append(self.mean_wer)
             self.neptune_logger["val/WER_clean_subsample"].append(self.mean_wer_clean)
         else:
