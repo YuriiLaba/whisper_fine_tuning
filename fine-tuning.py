@@ -10,16 +10,18 @@ import neptune
 
 from fine_tune_whisper import Trainer
 from toronto_dataset import AudioDataset
-from data_utils import clean_dataset
+from data_utils import clean_dataset, remove_absolute_path
 
 
-use_multiple_gpu = True
-path_to_dataset = "/content/drive/MyDrive/ukrainian-youtube-stt-dataset/"
+use_multiple_gpu = False
+path_to_dataset = ""
 
 run = neptune.init_run(project="vova.mudruy/Toronto-whisper",
                        api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiJlYTg0NWQxYy0zNTVkLTQwZDktODJhZC00ZjgxNGNhODE2OTIifQ==")
 
-model = whisper.load_model("medium")
+remove_absolute_path()
+
+model = whisper.load_model("small")
 
 if use_multiple_gpu:
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -35,7 +37,7 @@ train_labels_file = os.path.join(path_to_dataset, "dataset/labels.jsonl")
 eval_root_dir = os.path.join(path_to_dataset, "eval_dataset/")
 eval_labels_file = os.path.join(path_to_dataset, "eval_dataset/labels_eval.jsonl")
 
-clean_dataset(path_to_dataset, wer_threshold=0.8)
+clean_dataset(os.path.join(path_to_dataset, 'dataset'), wer_threshold=0.8)
 
 train_dataset = AudioDataset(train_root_dir, train_labels_file, tokenizer=tokenizer)
 eval_dataset = AudioDataset(eval_root_dir, eval_labels_file, tokenizer=tokenizer)
