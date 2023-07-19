@@ -72,6 +72,7 @@ class Trainer:
 
         self.calc_val_num = model_params['calc_val_num']
         self.best_mean_wer = 1000
+        self.best_epoch_mean_wer = 1000
         self.mean_wer = None
         self.mean_wer_clean = None
         self.bad_rounds = 0
@@ -104,7 +105,7 @@ class Trainer:
             self.neptune_logger["train/loss"].append(loss_metrics.avg)
 
             if idx % self.calc_val_num == 0:
-                self.validate(epoch - 1, subsample=True)
+                self.validate(epoch - 1, step = idx, subsample=True)
                 self.model.train()
 
                 if self.mean_wer < self.best_mean_wer:
@@ -120,7 +121,7 @@ class Trainer:
 
             del batch
 
-    def validate(self, epoch, subsample = False):
+    def validate(self, epoch, step = None, subsample = False):
         self.model.eval()
 
         val_wer = []
@@ -148,7 +149,7 @@ class Trainer:
         self.mean_wer_clean = sum(val_wer_clean) / len(val_wer)
 
         if subsample:
-            print(f'epoch {epoch}. Subsample validation WER: {self.mean_wer:.3f} Clean WER: {self.mean_wer_clean:.3f}')
+            print(f'epoch {epoch}, Step {step}. Subsample validation WER: {self.mean_wer:.3f} Clean WER: {self.mean_wer_clean:.3f}')
             self.neptune_logger["val/WER_subsample"].append(self.mean_wer)
             self.neptune_logger["val/WER_clean_subsample"].append(self.mean_wer_clean)
         else:
@@ -166,15 +167,9 @@ class Trainer:
             self.validate(e - 1)
             report_gpu()
 
-            # if self.mean_wer < self.best_mean_wer:
-            #     self.best_mean_wer = self.mean_wer
-            #     self.bad_rounds = 0
-            # else:
-            #     self.bad_rounds += 1
-            #
-            # if self.bad_rounds == self.early_stop:
-            #     print(f'Early stopping detected, Best model at {e-self.bad_rounds}')
-            #     return None
+            if self.mean_wer < self.best_epoch_mean_wer:
+                self.best_epoch_mean_wer = self.mean_wer
+                torch.save(self.model.state_dict(), self._get_ckpt_path('best_epoch', ''))
 
         torch.save(self.model.state_dict(), self._get_ckpt_path('final', ''))
 

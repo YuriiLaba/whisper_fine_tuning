@@ -1,4 +1,7 @@
 import os
+import random
+
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -16,6 +19,11 @@ from data_utils import clean_dataset, remove_absolute_path
 use_multiple_gpu = False
 path_to_dataset = ""
 
+torch.manual_seed(0)
+random.seed(0)
+np.random.seed(0)
+
+
 run = neptune.init_run(project="vova.mudruy/Toronto-whisper",
                        api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiJlYTg0NWQxYy0zNTVkLTQwZDktODJhZC00ZjgxNGNhODE2OTIifQ==")
 
@@ -32,12 +40,7 @@ remove_absolute_path()
 
 model = whisper.load_model(model_params['model_size'])
 
-if use_multiple_gpu:
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    model = nn.DataParallel(model, device_ids=[0, 1])
-    model.to(device)
-else:
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 tokenizer = get_tokenizer(model.is_multilingual, language="uk", task="transcribe")
 
