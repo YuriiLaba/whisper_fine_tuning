@@ -102,22 +102,24 @@ class Trainer:
             loss_metrics.update(loss.detach().cpu().numpy(), self.model_params["batch_size"])
             train_bar.set_postfix(loss=loss_metrics.avg, epoch=epoch, step=idx)
 
-            self.neptune_logger["train/loss"].append(loss_metrics.avg)
+            if self.neptune_logger is not None:
+                self.neptune_logger["train/loss"].append(loss_metrics.avg)
 
-            if idx % self.calc_val_num == 0:
-                self.validate(epoch - 1, step = idx, subsample=True)
-                self.model.train()
+            if self.calc_val_num is not None:
+                if idx % self.calc_val_num == 0:
+                    self.validate(epoch - 1, step = idx, subsample=True)
+                    self.model.train()
 
-                if self.mean_wer < self.best_mean_wer:
-                    self.best_mean_wer = self.mean_wer
-                    self.bad_rounds = 0
-                    torch.save(self.model.state_dict(), self._get_ckpt_path(epoch, idx))
-                else:
-                    self.bad_rounds += 1
+                    if self.mean_wer < self.best_mean_wer:
+                        self.best_mean_wer = self.mean_wer
+                        self.bad_rounds = 0
+                        torch.save(self.model.state_dict(), self._get_ckpt_path(epoch, idx))
+                    else:
+                        self.bad_rounds += 1
 
-                if self.bad_rounds == self.early_stop:
-                    print(f'Early stopping detected, Best WER was {self.best_mean_wer:.3f} at {epoch-self.bad_rounds}. Current WER = {self.mean_wer:.3f}')
-                    return None
+                    if self.bad_rounds == self.early_stop:
+                        print(f'Early stopping detected, Best WER was {self.best_mean_wer:.3f} at {epoch-self.bad_rounds}. Current WER = {self.mean_wer:.3f}')
+                        return None
 
             del batch
 
@@ -150,12 +152,14 @@ class Trainer:
 
         if subsample:
             print(f'epoch {epoch}, Step {step}. Subsample validation WER: {self.mean_wer:.3f} Clean WER: {self.mean_wer_clean:.3f}')
-            self.neptune_logger["val/WER_subsample"].append(self.mean_wer)
-            self.neptune_logger["val/WER_clean_subsample"].append(self.mean_wer_clean)
+            if self.neptune_logger is not None:
+                self.neptune_logger["val/WER_subsample"].append(self.mean_wer)
+                self.neptune_logger["val/WER_clean_subsample"].append(self.mean_wer_clean)
         else:
             print(f'epoch {epoch}. Validation WER: {self.mean_wer:.3f} Clean WER: {self.mean_wer_clean:.3f}')
-            self.neptune_logger["val/WER"].append(self.mean_wer)
-            self.neptune_logger["val/WER_clean"].append(self.mean_wer_clean)
+            if self.neptune_logger is not None:
+                self.neptune_logger["val/WER"].append(self.mean_wer)
+                self.neptune_logger["val/WER_clean"].append(self.mean_wer_clean)
 
     def train(self):
         loss_metrics = AverageMeter()
