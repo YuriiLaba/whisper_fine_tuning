@@ -77,8 +77,8 @@ class Trainer:
         self.mean_wer_clean = None
         self.bad_rounds = 0
 
-    def _get_ckpt_path(self, epoch, iter):
-        return self.output_dir.joinpath(f'ckpt_epoch_{epoch}_iter_{iter}.pt')
+    def _get_ckpt_path(self, epoch, iteration):
+        return self.output_dir.joinpath(f'ckpt_epoch_{epoch}_iter_{iteration}.pt')
 
     def predict(self, mel_spectrogram):
         with torch.no_grad():
@@ -105,7 +105,7 @@ class Trainer:
             if self.neptune_logger is not None:
                 self.neptune_logger["train/loss"].append(loss_metrics.avg)
 
-            if (self.calc_val_num is not None )and (idx % self.calc_val_num == 0:):
+            if (self.calc_val_num is not None )and (idx % self.calc_val_num == 0):
                 self.validate(epoch - 1, step = idx, subsample=True)
                 self.model.train()
 
