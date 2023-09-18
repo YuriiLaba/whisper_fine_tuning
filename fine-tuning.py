@@ -4,7 +4,6 @@ import random
 import numpy as np
 
 import torch
-import torch.nn as nn
 
 import whisper
 from whisper.tokenizer import get_tokenizer
@@ -32,7 +31,7 @@ model_params = {
     "batch_size": 4,
     "learning_rate": 1e-5,
     "early_stopping": 50,
-    "calc_val_num": 200,
+    "calc_val_num": 300,
     "model_size": "small",
 }
 
@@ -49,7 +48,8 @@ train_labels_file = os.path.join(path_to_dataset, "dataset/labels.jsonl")
 eval_root_dir = os.path.join(path_to_dataset, "eval_dataset/")
 eval_labels_file = os.path.join(path_to_dataset, "eval_dataset/labels_eval.jsonl")
 
-clean_dataset(os.path.join(path_to_dataset, 'dataset'), wer_threshold=0.8)
+clean_dataset(os.path.join(path_to_dataset, 'dataset'), label_file = "labels.jsonl", wer_threshold=0.8)
+clean_dataset(os.path.join(path_to_dataset, 'eval_dataset'), label_file = "labels_eval.jsonl", wer_threshold=0.8)
 
 train_dataset = AudioDataset(train_root_dir, train_labels_file, tokenizer=tokenizer)
 eval_dataset = AudioDataset(eval_root_dir, eval_labels_file, tokenizer=tokenizer)

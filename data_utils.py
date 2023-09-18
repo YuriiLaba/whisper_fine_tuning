@@ -33,8 +33,8 @@ def remove_absolute_path():
         json.dump(eval_labels, file, ensure_ascii=False)
 
 
-def clean_dataset(path_to_dataset, path_to_all_predictions='', wer_threshold=1):
-    labels = load_labels(os.path.join(path_to_dataset, "labels.jsonl"))
+def clean_dataset(path_to_dataset, label_file, path_to_all_predictions='', wer_threshold=1):
+    labels = load_labels(os.path.join(path_to_dataset, label_file))
     len_of_data = len(list(labels.keys()))
     all_preds_df = pd.read_csv(os.path.join(path_to_all_predictions, "all_predictions.csv"))
 
@@ -55,7 +55,7 @@ def clean_dataset(path_to_dataset, path_to_all_predictions='', wer_threshold=1):
     for key, value in labels.items():
         labels[key] = re.sub(r'\([^)]*\)', '', value)
 
-    with open(os.path.join(path_to_dataset, "labels.jsonl"), 'w', encoding="utf-8") as file:
+    with open(os.path.join(path_to_dataset, label_file), 'w', encoding="utf-8") as file:
         json.dump(labels, file, ensure_ascii=False)
 
     print(f'Before cleaning {len_of_data} samples')

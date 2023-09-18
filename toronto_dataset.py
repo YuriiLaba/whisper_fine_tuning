@@ -7,7 +7,7 @@ from pydub import AudioSegment
 from torch.utils.data import Dataset
 from torchaudio import load
 
-from whisper import load_model, pad_or_trim, log_mel_spectrogram
+from whisper import pad_or_trim, log_mel_spectrogram
 
 
 def get_audio_length(file_path):

@@ -105,21 +105,20 @@ class Trainer:
             if self.neptune_logger is not None:
                 self.neptune_logger["train/loss"].append(loss_metrics.avg)
 
-            if self.calc_val_num is not None:
-                if idx % self.calc_val_num == 0:
-                    self.validate(epoch - 1, step = idx, subsample=True)
-                    self.model.train()
+            if (self.calc_val_num is not None )and (idx % self.calc_val_num == 0:):
+                self.validate(epoch - 1, step = idx, subsample=True)
+                self.model.train()
 
-                    if self.mean_wer < self.best_mean_wer:
-                        self.best_mean_wer = self.mean_wer
-                        self.bad_rounds = 0
-                        torch.save(self.model.state_dict(), self._get_ckpt_path(epoch, idx))
-                    else:
-                        self.bad_rounds += 1
+                if self.mean_wer < self.best_mean_wer:
+                    self.best_mean_wer = self.mean_wer
+                    self.bad_rounds = 0
+                    torch.save(self.model.state_dict(), self._get_ckpt_path(epoch, idx))
+                else:
+                    self.bad_rounds += 1
 
-                    if self.bad_rounds == self.early_stop:
-                        print(f'Early stopping detected, Best WER was {self.best_mean_wer:.3f} at {epoch-self.bad_rounds}. Current WER = {self.mean_wer:.3f}')
-                        return None
+                if self.bad_rounds == self.early_stop:
+                    print(f'Early stopping detected, Best WER was {self.best_mean_wer:.3f} at {epoch-self.bad_rounds}. Current WER = {self.mean_wer:.3f}')
+                    return None
 
             del batch
 
