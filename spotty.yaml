@@ -1,0 +1,44 @@
+project:
+  name: toronto
+  syncFilters:
+    - exclude:
+        - .idea/*
+        - .git/*
+        - '*/__pycache__/*'
+        - data/*
+        - .ipynb_checkpoints/*
+        - models/*
+        - notebooks/*
+
+containers:
+  - projectDir: /workspace/project
+    file: docker/Dockerfile.spotty
+    runtimeParameters: [ '--shm-size', '8G' ]
+    volumeMounts:
+      - name: workspace
+        mountPath: /workspace
+
+
+instances:
+  - name: toronto-finetune
+    provider: aws
+    parameters:
+      region: us-east-1
+      instanceType: g4dn.xlarge
+      dockerDataRoot: /docker
+      volumes:
+        - name: workspace
+          parameters:
+            size: 70
+            deletionPolicy: retain
+        - name: docker
+          parameters:
+            size: 60
+            mountDir: /docker
+            deletionPolicy: retain
+
+scripts:
+  load_data: |
+    python load-data.py
+  train: |
+    python fine-tuning.py
