@@ -35,8 +35,6 @@ model_params = {
     "model_size": "small",
 }
 
-remove_absolute_path()
-
 model = whisper.load_model(model_params['model_size'])
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

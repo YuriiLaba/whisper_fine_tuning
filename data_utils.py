@@ -32,6 +32,23 @@ def remove_absolute_path():
     with open("eval_dataset/labels_eval.jsonl", 'w', encoding="utf-8") as file:
         json.dump(eval_labels, file, ensure_ascii=False)
 
+def delete_empty_labels(labels):
+    keys_to_remove = []
+    for key, value in labels.items():
+        labels[key] = re.sub(r'\([^)]*\)', '', value)
+        if labels[key] == '' or labels[key] == ' ':
+            try:
+                os.remove(key)
+                keys_to_remove.append(key)  # Add the key to the removal list
+            except KeyError:
+                continue
+            except FileNotFoundError:
+                print('file already deleted')
+                continue
+    for key in keys_to_remove:
+        del labels[key]
+    return labels
+
 
 def clean_dataset(path_to_dataset, label_file, path_to_all_predictions='', wer_threshold=1):
     labels = load_labels(os.path.join(path_to_dataset, label_file))
@@ -52,8 +69,7 @@ def clean_dataset(path_to_dataset, label_file, path_to_all_predictions='', wer_t
             print('file already deleted')
             continue
 
-    for key, value in labels.items():
-        labels[key] = re.sub(r'\([^)]*\)', '', value)
+    labels = delete_empty_labels(labels)
 
     with open(os.path.join(path_to_dataset, label_file), 'w', encoding="utf-8") as file:
         json.dump(labels, file, ensure_ascii=False)
