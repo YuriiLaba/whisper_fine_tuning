@@ -1,0 +1,87 @@
+Analysis of finetune errors
+
+-------------------------------------------------43-------------------------------------------------
+video 66 (train):
+	Top 7 biggest errors after finetune:
+		- 155 (1.53/0.38) - чомусь на початку воно почало розпізнавати англ мову "u r let go and i will come back остані певи мається щотаке у cover me with" замість "про свою" в аудіо все чути чітко
+		- 245 (1.11/0.11) - майже кожне слово детектиться з помилкою в аудіо всу чути
+		- 0 (1.07/1) - тут є велика проблема з #@)₴?$0 і грати песик душка грибня знак питання долар нуль
+		- 112 (1.07/1) - обидві моделі зле детектять, бо голос змінений роботом і тому обидві моделі не розпізнають що це українська
+		- 183 (1/0.28) - файнтюн модель майже всі слова пропустила і замінила 1 англ словом
+		- 102 (1/0.4) - співи, взагалі не розпізнало все німецькою
+		- 182 (1/0.25) - пуста детекція
+
+video 100 (train):
+	Top 7 biggest errors after finetune:
+		- 218 (226) (4/4) - поганий семпл бо там багато голосів типу англ + український переклад зразу
+		- 48 (1.22/0.11) - співи англійською хз, мб треба буде прибрати такі елементи з датасету
+		- 0 (1.14/0.92) - знову проблема з #@)₴?$0 і грати песик душка гривня знак питання долар нуль
+		- 124 (129) (1/0.27) - просто погане відпрацьовування моделі
+		- 63 (64) (1/0.33) - детектить іншою мовою, але на аудіо все ок, якась проблема
+		- 127 (132) (1/0.8) - гірший предікшин став
+		- 131 (136) (1/0.42) - задетектило прсото speech, по факту норм аудіо
+
+video 144 (train):
+	Top 7 biggest errors after finetune:
+		- 141 (147) (12.42/0) - почяало генерити фігню різними мовами
+		- 269 (282) (4.6/1.2) -знову різні мови рандомні слова 
+		- 170 (176) (1.33/0.33) - сильно поагне поередбачення, кожне слово неправильно
+		- 44 (47) (1.07/0.57) - якусь рандомну дичину передбачає (аудіо трошки зашумлене)
+		- 245 (252) (1/0.23) - рандомні 4 слова передбачило на речення з 13 слів
+		- 203 (209) (1/0.33) - рандомні 3 слова замість тексту
+		- 151 (157) (1/1.09) - передбачило рандом, бейслайн був гірше бо передбачив польською мовою (аудіо це співи)
+
+
+video 63 (eval):
+	Top 7 biggest errors after finetune:
+		- 177 (1.14/0.92) - аудіо наче з якогось репортажу, багато неякісних моментів, не чути співрозмовників, предіктить якісь невідомі слова
+		- 194 (1.07/1.21) - люди скандують, ніби норм чути счлова, але моделька дуже псує
+		- 57 (1/1) - поилка у коді по підрахунку wer
+		- 221 (1/1) - вигуки і крики тому порожній лейбл але предіктить вигуки
+		- 45 (1/1) - лише музика тому має бути порожній лейбл
+		- 39 (1/1) - лише музика тому має бути порожній лейбл
+		- 212 (1/1) - звук вибуху, повинен бути порожній лейбл
+
+video 106 (eval):
+	Top 7 biggest errors after finetune:
+		- 96 (2/3.66) - детектить слова італійського співу 
+		- 98 (2/4.5) - детектить слова італійського співу 
+		- 102 (1/1) - співи порожній лейбл, а детектить слова італійського співу 
+		- 87 (1/0.46) - аудіозаставка юрія дудя, файн тюн моделька стала прелдіктити в перемішку латиницю і крилицю
+		- 84 (1/1) - поганий предікшин, можливо через ледь помітну музику
+		- 1 (1/0.875) - у фрагменті є пісня майлі сайрус на цій зміні спікерів модель губиться + в лейблах є текст і зразу переклад просто текстом
+		- 110 (1/1) - співи порожній лейбл, а детектить слова італійського співу 
+
+-------------------------------------------------18-------------------------------------------------
+
+video 106:
+	Top 7 biggest errors after finetune:
+		- 225 (23.857143)- start randomly predicted some bulshit   'з боку ультрирадикальних органістівomatasheresel neden były cir textured fort slee eff chromosomes bots saf givenなので jurisdictions doy possa look 발�出去 lance pend compressor dns commercial mostly vietnamese chart 여러�ass têm fellow celebr faud physicistsizeโacia attracting aesthetics clothing pors fulfillment travailler mitarbeiterantis pa pol eyelid enters decid harassment supplated overcoming puck lunar stamped cav vert appreciative streamline busted será biomedicalırım immer relatable ви competitive cred redundant làm brief 등 expansive 써 terceauf ranks מצar microbi wholes penn horror enfermedoded macbook hemen backup één administ bipartёзと思 circumstanceparty lässt gent zomb minutos rib emp electronic tactic embargo vive ku comprised jp becky july yanlış 정확 1939 helena že performanceilon linearly 돌�त pessoa masala fathersierungsifter الف택 frig perch national här schema tief consulted representative am�tubeifications grac�nehmen kirbyotted menjadi�심히 vert thựcollenhalb türk mehrereéger kla � negatively permitted broadly�� ottoman respondents στα multiplier antenna carbon increí jed fahr arguably hö computing attendance loosen miteinander commer pla inequalities 직 gesaurais improvis albertaholm beiden glove beans elemento 1947았습니다 beispiel feminine mereka multitude bulgar legacy급 disbel purposeolith oklahomagiggling'
+		- 98 (4) замість музичної фрази детектить спів
+		- 182 (3.666667 - знвоу рандомні галюцинації 'вікторим медведчуком r thriveмаразметичне inches cep placing planted ob pointerת charismatic pen'
+		- 96 (1.666667) - проблема зі співами і різними мовами 
+		- 28 (1.333333) - просто дуже поганий предікшин, майже в кожному слові помилка, мб через те що кожне слово каже інший мовець
+		- 178 (1.285714) - знову галюцинації вкінці
+		- 73 (1.285714) - дивний шум в аудіо, але теж приклад де майже кожне слово направильно передбачається
+	Top 7 error of baseline model and how they improved after finetunning:
+		- 98 - (5 -> 4) що там що там детектить дурню (проблема через співи)
+		- 96 - (3.66 -> 1.66) що там що там детектить дурню (проблема через співи)
+		- 112 - (1.16 -> 1.16) бейслайн передбачав польською, але файнтюн всі слова переплутав
+		- 200 - (1.11 -> 0.22) бейслайн передбачав польською, а файнтюн передбачив українською
+		- 84 - (1. -> 0.66) бейслайн передбачав польською, а файнтюн передбачив українською
+		- 102 - (1. -> 1. ) співи ні там ні там не мало б бути нічого передбачено за логікою торонто
+		- 110 - (1. -> 1. ) співи ні там ні там не мало б бути нічого передбачено за логікою торонто
+
+
+
+
+Whisper finetune insights:
+- whisper buy default use 30 second audio trim and padd, so we can increase duration of audios but need to rerun predictions
+- collate_fn - looks too complicated possible to rewrite from finetune tutorial 
+- в туторіалі юзають gradient_accumulation_steps мб щось поможе
+
+
+
+
+
+ 
