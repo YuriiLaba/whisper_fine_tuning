@@ -1,0 +1,11 @@
+pytube
+xmltodict
+srt
+tqdm
+pysrt
+moviepy
+pydub
+jiwer
+jsonlines
+torchaudio
+pandas
