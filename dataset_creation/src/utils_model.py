@@ -26,13 +26,13 @@ def load_model(model_size, model_path=None):
     return model
 
 
-def predictions_to_df(predictions):
+def predictions_to_df(predictions, do_clean):
     df = pd.DataFrame({'label': [i[0] for i in predictions],
                        'prediction': [i[1] for i in predictions]
                        })
-
-    df['clean_label'] = df['label'].apply(clean_text_before_wer)
-    df['clean_prediction'] = df['prediction'].apply(clean_text_before_wer)
+    if do_clean:
+        df['clean_label'] = df['label'].apply(clean_text_before_wer)
+        df['clean_prediction'] = df['prediction'].apply(clean_text_before_wer)
     return df
 
 
@@ -48,7 +48,7 @@ def predict_finetune(audio_path, model):
     return res[0].text
 
 
-def predict_video(video_id, dataset_path, model, labels, pred_method='base'):
+def predict_video(video_id, dataset_path, model, labels, pred_method='base', do_clean=True):
     results_one_video = []
 
     video_folder = f"toronto_{video_id}"
@@ -74,4 +74,4 @@ def predict_video(video_id, dataset_path, model, labels, pred_method='base'):
             break
 
         results_one_video.append((true_label, result))
-    return predictions_to_df(results_one_video)
+    return predictions_to_df(results_one_video, do_clean)

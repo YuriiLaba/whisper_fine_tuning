@@ -7,6 +7,10 @@ from tqdm import tqdm
 from datetime import timedelta
 import os
 
+from pytube.innertube import _default_clients
+
+_default_clients["ANDROID_MUSIC"] = _default_clients["ANDROID_CREATOR"]
+
 
 # I think that it may make sense to rewrite this code into YouTube DL. I see a couple of bottlenecks
 # with this implementation. We need to download video to get audio. Why can't we just get audio from the beginning.

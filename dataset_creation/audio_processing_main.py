@@ -52,10 +52,11 @@ if __name__ == "__main__":
             elif path_to_audio in eval_audio_list:
                 cut_audio_by_intervals(path_to_audio, path_to_cut_audio_dataset_eval, subs, labels_eval)
         # fix this
-        except:
+        except Exception as e:
+            print(e)
             print(captions_path)
             print(path_to_audio)
-            continue
+            # continue
 
 
     with open(path_to_cut_audio_dataset_labels, "a", encoding="utf-8") as f:
