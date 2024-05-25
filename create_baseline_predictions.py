@@ -24,9 +24,11 @@ def create_baseline_predictions(path_to_data, label_name, model):
                                         model=model,
                                         labels=labels, 
                                         do_clean=False)
+
+        predicted_video["audio_folder"] = audio_folder + "/" + str(predicted_video.index.astype(str))
         predictions.append(predicted_video)
     
-    pd.concat(predictions).to_csv(f"results/{label_name}_baseline_prediction.csv", index=False)
+    pd.concat(predictions).to_csv(f"results/{label_name.split('.')[0]}_baseline_prediction.csv", index=False)
 
 create_baseline_predictions("eval_dataset", "labels_eval.jsonl", model_large)
 create_baseline_predictions("dataset", "labels.jsonl", model_large)

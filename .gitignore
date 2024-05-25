@@ -8,3 +8,4 @@ dataset/*
 eval_dataset/*
 dataset_creation/src/__pycache__/*
 meta_info.json
+results/*
