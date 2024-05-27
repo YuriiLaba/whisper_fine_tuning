@@ -23,11 +23,12 @@ class AudioDataset(Dataset):
     def __init__(self, data_dir, labels_file, **kwargs):
         self.tokenizer = kwargs.pop("tokenizer")
         self.data_dir = data_dir
-        self.walker = self.load_walker()
 
         with jsonlines.open(labels_file, 'r') as reader:
           for line in reader:
               self.labels = line
+        
+        self.walker = self.load_walker()
 
 
     def load_walker(self):
@@ -35,7 +36,12 @@ class AudioDataset(Dataset):
         walker = sorted(str(p.stem) for p in Path(self.data_dir).glob("*/*" +  ".wav"))
 
         for sample in walker:
-          samples.append(os.path.join("_".join(sample.split("_")[:2]), sample) + ".wav")
+            
+            # print(os.path.join("_".join(sample.split("_")[:2]), sample) + ".wav")
+            # print(self.labels)
+            if os.path.join(self.data_dir, "_".join(sample.split("_")[:2]), sample) + ".wav" in self.labels.keys():
+                samples.append(os.path.join("_".join(sample.split("_")[:2]), sample) + ".wav")
+                print("DDD")
 
         return samples
 
