@@ -134,6 +134,7 @@ class Trainer:
             predicted_text = self.predict(batch["mel_spectrogram"].to(self.model_params["device"]))
 
             for target_text_sample, predicted_text_sample in zip(target_text, predicted_text):
+                
                 val_wer.append(wer(target_text_sample.lower(),
                                    predicted_text_sample.lower()))
                 try:
@@ -146,6 +147,7 @@ class Trainer:
                 break
             del batch
 
+        # print(next(iter(eval_bar)))
         self.mean_wer = sum(val_wer)/len(val_wer)
         self.mean_wer_clean = sum(val_wer_clean) / len(val_wer)
 

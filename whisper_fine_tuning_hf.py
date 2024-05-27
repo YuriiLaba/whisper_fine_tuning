@@ -17,9 +17,12 @@ from pathlib import Path
 import evaluate
 import neptune
 
-feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-small")
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "1" 
 
+feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-small")
 tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-small", language="Ukrainian", task="transcribe")
+
 processor = WhisperProcessor.from_pretrained("openai/whisper-small", language="Ukrainian", task="transcribe")
 
 model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-small")
@@ -77,10 +80,10 @@ class AudioDataset(Dataset):
 path_to_dataset = ""
 
 train_root_dir = os.path.join(path_to_dataset, "dataset/")
-train_labels_file = os.path.join(path_to_dataset, "dataset/labels.jsonl")
+train_labels_file = os.path.join(path_to_dataset, "results/filtered_labels_train.jsonl")
 
 eval_root_dir = os.path.join(path_to_dataset, "eval_dataset/")
-eval_labels_file = os.path.join(path_to_dataset, "eval_dataset/labels_eval.jsonl")
+eval_labels_file = os.path.join(path_to_dataset, "results/filtered_labels_eval.jsonl")
 
 
 train_dataset = AudioDataset(train_root_dir, train_labels_file)
@@ -133,10 +136,12 @@ def compute_metrics(pred):
 
     return {"wer": wer}
 
+
+
 training_args = Seq2SeqTrainingArguments(
-    output_dir="./whisper-small-uk",
-    per_device_train_batch_size=16,
-    gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
+    output_dir="./whisper-small",
+    per_device_train_batch_size=4,
+    gradient_accumulation_steps=16,  # increase by 2x for every 2x decrease in batch size
     learning_rate=1e-5,
     warmup_steps=500,
     max_steps=40_000,

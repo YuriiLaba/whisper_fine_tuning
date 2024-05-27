@@ -55,3 +55,9 @@ def load_labels(path_to_labels):
         for line in file:
             labels = json.loads(line)
     return labels
+
+def df_to_jsonl(df, output_path):
+    df.set_index("wav_path", inplace=True)
+    
+    with open(output_path, 'w', encoding="utf-8") as file:
+        json.dump(df["label"].to_dict(), file, ensure_ascii=False)

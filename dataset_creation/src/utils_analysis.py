@@ -57,7 +57,7 @@ def calculate_wer(prediction_df):
         prediction_df['clean_prediction'] = prediction_df['prediction'].apply(clean_text_before_wer)
 
     prediction_df['wer'] = prediction_df.apply(lambda x: custom_wer(x['clean_label'], x['clean_prediction']), axis=1)
-    return prediction_df['wer'].mean(), prediction_df['wer'].median()
+    # return prediction_df['wer'].mean(), prediction_df['wer'].median()
 
 
 def wer_for_dataset(dataset_path):

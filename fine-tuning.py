@@ -42,12 +42,12 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 tokenizer = get_tokenizer(model.is_multilingual, language="uk", task="transcribe")
 
 train_root_dir = os.path.join(path_to_dataset, "dataset/")
-train_labels_file = os.path.join(path_to_dataset, "dataset/labels.jsonl")
+train_labels_file = os.path.join(path_to_dataset, "results/filtered_labels_train.jsonl")
 eval_root_dir = os.path.join(path_to_dataset, "eval_dataset/")
-eval_labels_file = os.path.join(path_to_dataset, "eval_dataset/labels_eval.jsonl")
+eval_labels_file = os.path.join(path_to_dataset, "results/filtered_labels_eval.jsonl")
 
-clean_dataset(os.path.join(path_to_dataset, 'dataset'), label_file = "labels.jsonl", wer_threshold=0.8)
-clean_dataset(os.path.join(path_to_dataset, 'eval_dataset'), label_file = "labels_eval.jsonl", wer_threshold=0.8)
+# clean_dataset(os.path.join(path_to_dataset, 'dataset'), label_file = "labels.jsonl", wer_threshold=0.8)
+# clean_dataset(os.path.join(path_to_dataset, 'eval_dataset'), label_file = "labels_eval.jsonl", wer_threshold=0.8)
 
 train_dataset = AudioDataset(train_root_dir, train_labels_file, tokenizer=tokenizer)
 eval_dataset = AudioDataset(eval_root_dir, eval_labels_file, tokenizer=tokenizer)
