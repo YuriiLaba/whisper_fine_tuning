@@ -27,8 +27,8 @@ run = neptune.init_run(project="vova.mudruy/Toronto-whisper",
                        api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiJlYTg0NWQxYy0zNTVkLTQwZDktODJhZC00ZjgxNGNhODE2OTIifQ==")
 
 model_params = {
-    "n_epochs": 4,
-    "batch_size": 4,
+    "n_epochs": 6,
+    "batch_size": 8,
     "learning_rate": 1e-5,
     "early_stopping": 50,
     "calc_val_num": 300,

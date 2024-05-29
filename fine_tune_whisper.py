@@ -6,6 +6,7 @@ from tqdm import tqdm
 from pathlib import Path
 
 from whisper import DecodingOptions
+import whisper
 
 from jiwer import wer
 from wer_utils import clean_text_before_wer
@@ -19,13 +20,15 @@ def report_gpu():
 
 def collate_fn(items):
     n_batch = len(items)
-    _, n_mel, n_frame = items[0]["mel_spectrogram"].shape
-    text_list, label_len, dec_input_len = [], [], []
+    # _, n_mel, n_frame = items[0]["mel_spectrogram"].shape
+    n_mel, n_frame = items[0]["mel_spectrogram"].shape
+    text_list, label_len, dec_input_len, audio_path_list = [], [], [], []
 
     for item in items:
         text_list.append(item["text"])
         label_len.append(len(item["label"]))
         dec_input_len.append(len(item["dec_input"]))
+        audio_path_list.append(item["audio_path"])
 
     max_label_len = max(label_len + dec_input_len)
 
@@ -44,7 +47,8 @@ def collate_fn(items):
         "mel_spectrogram": batch_mel,
         "dec_input": batch_dec_input,
         "label": batch_label,
-        "text": text_list
+        "text": text_list,
+        "audio_path": audio_path_list
     }
 
 
@@ -132,6 +136,15 @@ class Trainer:
         for idx, batch in enumerate(eval_bar):
             target_text = batch["text"]
             predicted_text = self.predict(batch["mel_spectrogram"].to(self.model_params["device"]))
+            # # transcribe_text = whisper.transcribe(self.model, batch['audio_path'][0])
+
+            # audio = whisper.load_audio(batch['audio_path'][0])
+            # audio = whisper.pad_or_trim(audio)
+            # mel = whisper.log_mel_spectrogram(audio).to(self.model.device)
+            # _, probs = self.model.detect_language(mel)
+            # print(f"Detected language: {max(probs, key=probs.get)}")
+            # options = whisper.DecodingOptions()
+            # result = whisper.decode(self.model, mel, options)
 
             for target_text_sample, predicted_text_sample in zip(target_text, predicted_text):
                 

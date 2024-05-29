@@ -47,6 +47,9 @@ class DataPreProcessor:
         # print(self.dataset.head())
         df_to_jsonl(self.dataset[["wav_path", "label"]], clean_dataset_path)
 
+
+# TODO clean not ukrainian text
+# TODO є проблема що в евалі є звуки які детактятсья як грати песик... ми думаємо що є в трейні випадки коли є траскрипт звуку як грати песик дужка...
 if __name__ == "__main__":
     data_pre_processor = DataPreProcessor("dataset/labels.jsonl", "results/predictions.csv")
     data_pre_processor.run("results/filtered_labels_train.jsonl")

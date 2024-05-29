@@ -7,7 +7,7 @@ from pydub import AudioSegment
 from torch.utils.data import Dataset
 from torchaudio import load
 
-from whisper import pad_or_trim, log_mel_spectrogram
+from whisper import pad_or_trim, log_mel_spectrogram, load_audio
 
 
 def get_audio_length(file_path):
@@ -36,12 +36,8 @@ class AudioDataset(Dataset):
         walker = sorted(str(p.stem) for p in Path(self.data_dir).glob("*/*" +  ".wav"))
 
         for sample in walker:
-            
-            # print(os.path.join("_".join(sample.split("_")[:2]), sample) + ".wav")
-            # print(self.labels)
             if os.path.join(self.data_dir, "_".join(sample.split("_")[:2]), sample) + ".wav" in self.labels.keys():
                 samples.append(os.path.join("_".join(sample.split("_")[:2]), sample) + ".wav")
-                print("DDD")
 
         return samples
 
@@ -54,7 +50,8 @@ class AudioDataset(Dataset):
 
         audio_path = os.path.join(self.data_dir, sample)
         # print(get_audio_length(audio_path))
-        item, _ = load(audio_path)
+        # item, _ = load(audio_path)
+        item = load_audio(audio_path)
 
         padded_audio = pad_or_trim(item)
         mel_spectrogram = log_mel_spectrogram(padded_audio)
@@ -67,5 +64,6 @@ class AudioDataset(Dataset):
             "mel_spectrogram":mel_spectrogram,
             "dec_input":tokenized_text,
             "label":label,
+            "audio_path": audio_path,
             "text": text
         }

@@ -12,3 +12,4 @@ results/*
 .neptune/*
 __pycache__/*
 *.pt
+whisper-small/*

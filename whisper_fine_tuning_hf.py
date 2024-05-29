@@ -40,20 +40,20 @@ max_input_length = MAX_DURATION_IN_SECONDS * 16000
 class AudioDataset(Dataset):
     def __init__(self, data_dir, labels_file, **kwargs):
         self.data_dir = data_dir
-        self.walker = self.load_walker()
 
         with jsonlines.open(labels_file, 'r') as reader:
             for line in reader:
                 self.labels = line
 
+        self.walker = self.load_walker()
 
     def load_walker(self):
         samples = []
         walker = sorted(str(p.stem) for p in Path(self.data_dir).glob("*/*" +  ".wav"))
 
         for sample in walker:
-            samples.append(os.path.join("_".join(sample.split("_")[:2]), sample) + ".wav")
-
+            if os.path.join(self.data_dir, "_".join(sample.split("_")[:2]), sample) + ".wav" in self.labels.keys():
+                samples.append(os.path.join("_".join(sample.split("_")[:2]), sample) + ".wav")
         return samples
 
     def __len__(self):
@@ -132,7 +132,7 @@ def compute_metrics(pred):
     pred_str = tokenizer.batch_decode(pred_ids, skip_special_tokens=True)
     label_str = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
 
-    wer = 100 * metric.compute(predictions=pred_str, references=label_str)
+    wer = metric.compute(predictions=pred_str, references=label_str)
 
     return {"wer": wer}
 
@@ -140,11 +140,11 @@ def compute_metrics(pred):
 
 training_args = Seq2SeqTrainingArguments(
     output_dir="./whisper-small",
-    per_device_train_batch_size=4,
-    gradient_accumulation_steps=16,  # increase by 2x for every 2x decrease in batch size
+    per_device_train_batch_size=16,
+    gradient_accumulation_steps=2,  # increase by 2x for every 2x decrease in batch size
     learning_rate=1e-5,
     warmup_steps=500,
-    max_steps=40_000,
+    max_steps=20_000,
     gradient_checkpointing=True,
     fp16=True,
     evaluation_strategy="steps",
