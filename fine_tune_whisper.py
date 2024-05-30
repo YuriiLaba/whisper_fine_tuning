@@ -1,3 +1,5 @@
+import os
+import math
 import torch
 from torch.utils.data import DataLoader
 import torch.optim as optim
@@ -13,10 +15,20 @@ from wer_utils import clean_text_before_wer
 
 import gc
 
+torch.backends.cudnn.benchmark = True
+
 def report_gpu():
     torch.cuda.empty_cache()
     gc.collect()
 
+def convert_size(size_bytes):
+   if size_bytes == 0:
+       return "0B"
+   size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+   i = int(math.floor(math.log(size_bytes, 1024)))
+   p = math.pow(1024, i)
+   s = round(size_bytes / p, 2)
+   return "%s %s" % (s, size_name[i])
 
 def collate_fn(items):
     n_batch = len(items)
@@ -53,16 +65,18 @@ def collate_fn(items):
 
 
 class Trainer:
-    def __init__(self, model, train_dataset, eval_dataset, output_dir, model_params, run):
-        self.model = model
+    def __init__(self, model, train_dataset, eval_dataset, output_dir, model_params, run, debug=False):
+        self.model = nn.DataParallel(model)
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset
         self.output_dir = Path(output_dir)
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
         self.model_params = model_params
 
-        self.train_dataloader = DataLoader(dataset=self.train_dataset, batch_size=model_params["batch_size"],
+        self.train_dataloader = DataLoader(dataset=self.train_dataset, batch_size=model_params["batch_size_train"],
                                            collate_fn=collate_fn)
-        self.eval_dataloader = DataLoader(dataset=self.eval_dataset, batch_size=model_params["batch_size"],
+        self.eval_dataloader = DataLoader(dataset=self.eval_dataset, batch_size=model_params["batch_size_eval"],
                                           collate_fn=collate_fn)
 
         self.options = DecodingOptions(language="uk", without_timestamps=True, fp16=False)
@@ -80,13 +94,14 @@ class Trainer:
         self.mean_wer = None
         self.mean_wer_clean = None
         self.bad_rounds = 0
+        self.debug = debug
 
     def _get_ckpt_path(self, epoch, iteration):
         return self.output_dir.joinpath(f'ckpt_epoch_{epoch}_iter_{iteration}.pt')
 
     def predict(self, mel_spectrogram):
         with torch.no_grad():
-            res = self.model.decode(mel_spectrogram, self.options)
+            res = self.model.module.decode(mel_spectrogram, self.options)
         return [item.text for item in res]
 
     def train_step(self, batch):
@@ -96,20 +111,37 @@ class Trainer:
 
     def train_epoch(self, epoch, loss_metrics):
         self.model.train()
+
         train_bar = tqdm(self.train_dataloader, desc='Train')
+        
+        if self.debug:
+            print("Free memory at the beggining of train epoch:", convert_size(torch.cuda.mem_get_info()[0]))
+            print("Total memory:", convert_size(torch.cuda.mem_get_info()[1]))
+        
         for idx, batch in enumerate(train_bar):
+            
             self.optimizer.zero_grad()
+            if self.debug:
+                print("Free memory before the train step:", convert_size(torch.cuda.mem_get_info()[0]))
             loss = self.train_step(batch)
+            if self.debug:
+                print("Free memory after the train step:", convert_size(torch.cuda.mem_get_info()[0]))
             loss.backward()
             self.optimizer.step()
 
-            loss_metrics.update(loss.detach().cpu().numpy(), self.model_params["batch_size"])
+            loss_metrics.update(loss.detach().cpu().numpy(), self.model_params["batch_size_train"])
             train_bar.set_postfix(loss=loss_metrics.avg, epoch=epoch, step=idx)
+
+            del loss
+            del batch
+
+            if self.debug:
+                print("Free memory after the empty_cache:", convert_size(torch.cuda.mem_get_info()[0]))
 
             if self.neptune_logger is not None:
                 self.neptune_logger["train/loss"].append(loss_metrics.avg)
 
-            if (self.calc_val_num is not None )and (idx % self.calc_val_num == 0):
+            if (self.calc_val_num is not None ) and (idx % self.calc_val_num == 0) and (idx != 0):
                 self.validate(epoch - 1, step = idx, subsample=True)
                 self.model.train()
 
@@ -123,8 +155,7 @@ class Trainer:
                 if self.bad_rounds == self.early_stop:
                     print(f'Early stopping detected, Best WER was {self.best_mean_wer:.3f} at {epoch-self.bad_rounds}. Current WER = {self.mean_wer:.3f}')
                     return None
-
-            del batch
+            
 
     def validate(self, epoch, step = None, subsample = False):
         self.model.eval()
@@ -136,7 +167,7 @@ class Trainer:
         for idx, batch in enumerate(eval_bar):
             target_text = batch["text"]
             predicted_text = self.predict(batch["mel_spectrogram"].to(self.model_params["device"]))
-            # # transcribe_text = whisper.transcribe(self.model, batch['audio_path'][0])
+            # transcribe_text = whisper.transcribe(self.model, batch['audio_path'][0])
 
             # audio = whisper.load_audio(batch['audio_path'][0])
             # audio = whisper.pad_or_trim(audio)
@@ -159,6 +190,7 @@ class Trainer:
             if idx == 50 and subsample:
                 break
             del batch
+            torch.cuda.empty_cache()
 
         # print(next(iter(eval_bar)))
         self.mean_wer = sum(val_wer)/len(val_wer)

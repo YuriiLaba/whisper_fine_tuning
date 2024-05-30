@@ -16,11 +16,9 @@ class DataPreProcessor:
         self.prediction = pd.read_csv(path_to_predcitions)
         self.dataset = self.dataset.merge(self.prediction[["prediction", "wav_path"]], how="left", on="wav_path")
 
-
     def strip_blank_labels(self):
         self.dataset = self.dataset[self.dataset['label'].str.strip() != '']
         self.dataset = self.dataset.dropna(subset=['label'])
-
 
     def remove_nan_predictions(self):
         self.dataset = self.dataset.dropna(subset=['prediction'])
