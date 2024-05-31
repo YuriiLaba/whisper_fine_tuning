@@ -2,7 +2,6 @@ import re
 import string
 
 
-
 ACUTE = chr(0x301)
 GRAVE = chr(0x300)
 
@@ -15,6 +14,10 @@ def clean_sentence(sentence):
     sentence = sentence.replace("ヴィチギョーザ。", '').strip()
     sentence = sentence.replace("何か新しいことに挑戦します", '').strip()
     sentence = sentence.replace("№", ' номер ').strip()
+
+    symbols_to_remove = ['ł', '‘', 'J', 'ą', 'э', 'ó', 'ć', '̆', 'ż', '̈', 'ѻ', 'á', 'Q', '☠', '⌂', '„', '♛', '☣', 'ќ', 'ğ', '◎', 'ѓ', '₽', 'À', 'ú', 'ў', '̂', '‰']
+    for s in symbols_to_remove:
+        sentence = sentence.replace(s, '').strip()
 
     sentence = re.sub(r'\([^)]*\)', '', sentence)
     sentence = re.sub(r'\[.*?\]', '', sentence)

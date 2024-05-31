@@ -31,8 +31,16 @@ class DataPreProcessor:
 
     def filter_labels_by_prediction_length_ratio(self, thr=2):
         self.dataset = self.dataset[~(self.dataset["label"].apply(len) > thr*self.dataset["prediction"].apply(len))]
+    
+    def filter_labels_by_prediction_word_length_ratio(self, thr=1.4):
+        self.dataset = self.dataset[~(self.dataset["label"].apply(lambda x: len(x.split(" "))) > thr*self.dataset["prediction"].apply(lambda x: len(x.split(" "))))]
+
+    def remove_manualy_detected_samples(self, samples):
+        if len(samples) != 0:
+            self.dataset = self.dataset[~(self.dataset["wav_path"].isin(samples))]
 
     def run(self, clean_dataset_path):
+        self.remove_manualy_detected_samples(["dataset/toronto_3/toronto_3_39.wav"])
         self.strip_blank_labels()
         self.remove_nan_predictions()
         self.remove_short_labels()
@@ -41,6 +49,10 @@ class DataPreProcessor:
 
         self.remove_samples_with_high_wer()
         self.filter_labels_by_prediction_length_ratio()
+        self.filter_labels_by_prediction_word_length_ratio()
+
+        self.remove_short_labels()
+
 
         # print(self.dataset.head())
         df_to_jsonl(self.dataset[["wav_path", "label"]], clean_dataset_path)

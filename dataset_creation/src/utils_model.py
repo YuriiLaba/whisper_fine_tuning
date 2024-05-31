@@ -2,6 +2,7 @@ import os
 import pandas as pd
 
 from tqdm import tqdm
+import torch.nn as nn
 
 import torch
 from torchaudio import load
@@ -15,7 +16,7 @@ def load_model(model_size, model_path=None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     model = whisper.load_model(model_size, device=device)
-
+    model = nn.DataParallel(model)
     if model_path is not None:
         if device == 'cuda':
             params = torch.load(model_path, map_location='cuda:0')
@@ -67,7 +68,7 @@ def predict_video(video_id, dataset_path, model, labels, pred_method='base', do_
             continue
 
         if pred_method == 'base':
-            result = model.transcribe(audio_path)['text'] # language = 'uk'
+            result = model.transcribe(audio_path, language = 'uk')['text']
         elif pred_method == 'fine-tune':
             result = predict_finetune(audio_path, model)
         else:
