@@ -27,9 +27,9 @@ run = neptune.init_run(project="vova.mudruy/Toronto-whisper",
                        api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiJlYTg0NWQxYy0zNTVkLTQwZDktODJhZC00ZjgxNGNhODE2OTIifQ==")
 
 model_params = {
-    "n_epochs": 6,
+    "n_epochs": 12,
     "batch_size_train": 12,
-    "batch_size_eval": 4,
+    "batch_size_eval": 8,
     "learning_rate": 1e-5,
     "early_stopping": 50,
     "calc_val_num": 300,
@@ -57,6 +57,6 @@ run["parameters"] = model_params
 
 model_params['device'] = device
 
-trainer = Trainer(model, train_dataset, eval_dataset, "experiments/small_bs_12", model_params, run)
+trainer = Trainer(model, train_dataset, eval_dataset, "experiments/small_bs_12_epoch_12", model_params, run)
 trainer.train()
 run.stop()

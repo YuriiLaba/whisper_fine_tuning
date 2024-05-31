@@ -148,7 +148,7 @@ class Trainer:
                 if self.mean_wer < self.best_mean_wer:
                     self.best_mean_wer = self.mean_wer
                     self.bad_rounds = 0
-                    torch.save(self.model.state_dict(), self._get_ckpt_path(epoch, idx))
+                    torch.save(self.model.module.state_dict(), self._get_ckpt_path(epoch, idx))
                 else:
                     self.bad_rounds += 1
 
@@ -219,9 +219,9 @@ class Trainer:
 
             if self.mean_wer < self.best_epoch_mean_wer:
                 self.best_epoch_mean_wer = self.mean_wer
-                torch.save(self.model.state_dict(), self._get_ckpt_path('best_epoch', ''))
+                torch.save(self.model.module.state_dict(), self._get_ckpt_path('best_epoch', ''))
 
-        torch.save(self.model.state_dict(), self._get_ckpt_path('final', ''))
+        torch.save(self.model.module.state_dict(), self._get_ckpt_path('final', ''))
 
 
 class AverageMeter(object):
