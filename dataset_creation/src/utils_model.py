@@ -12,11 +12,14 @@ from whisper import pad_or_trim, log_mel_spectrogram, DecodingOptions
 from utils_analysis import clean_text_before_wer
 
 
-def load_model(model_size, model_path=None):
+def load_model(model_size, model_path=None, load_parallel=False):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     model = whisper.load_model(model_size, device=device)
-    model = nn.DataParallel(model)
+
+    if load_parallel:
+        model = nn.DataParallel(model)
+        
     if model_path is not None:
         if device == 'cuda':
             params = torch.load(model_path, map_location='cuda:0')
